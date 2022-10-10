@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "logger"
+require 'json'
 require "puma/events"
 
 module Gemstash
@@ -25,17 +26,27 @@ module Gemstash
     end
 
     def self.setup_logger(logfile)
-      @logger = Logger.new(logfile, 2, 10_485_760)
-      @logger.level = Logger::INFO
+      @logger                 = Logger.new(logfile, 2, 10_485_760)
+      @logger.level           = Logger::INFO
       @logger.datetime_format = "%d/%b/%Y:%H:%M:%S %z"
-      @logger.formatter = proc do |severity, datetime, _progname, msg|
-        if msg.end_with?("\n")
-          "[#{datetime}] - #{severity} - #{msg}"
-        else
-          "[#{datetime}] - #{severity} - #{msg}\n"
+      @logger.formatter       = log_formatter
+      @logger
+    end
+
+    def self.log_formatter
+      if ENV['GEMSTASH_LOG_FORMAT'] == 'json'
+        proc do |severity, datetime, _progname, msg|
+          "#{{ severity: severity, datetime: datetime, message: msg }.to_json}\n"
+        end
+      else
+        proc do |severity, datetime, _progname, msg|
+          if msg.end_with?("\n")
+            "[#{datetime}] - #{severity} - #{msg}"
+          else
+            "[#{datetime}] - #{severity} - #{msg}\n"
+          end
         end
       end
-      @logger
     end
 
     def self.logger

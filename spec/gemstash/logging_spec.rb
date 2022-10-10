@@ -18,6 +18,23 @@ RSpec.describe Gemstash::Logging do
     expect(log_contents).to include("a message with a newline\n")
     expect(log_contents).to_not include("a formatted message\n\n")
   end
+
+  context "when GEMSTASH_LOG_FORMAT is set to json" do
+    before do
+      ENV["GEMSTASH_LOG_FORMAT"] = "json"
+      the_log
+    end
+
+    after do
+      ENV["GEMSTASH_LOG_FORMAT"] = ""
+      the_log
+    end
+
+    it "formats the log in JSON when the environment variable is set" do
+      Gemstash::Logging.logger.error("a formatted message")
+      expect(the_log).to include({ severity: "ERROR", datetime: Time.now, message: "a formatted message" }.to_json)
+    end
+  end
 end
 
 RSpec.describe Gemstash::Logging::StreamLogger do
