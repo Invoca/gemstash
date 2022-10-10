@@ -35,6 +35,10 @@ module Gemstash
       body JSON.dump("error" => "Version already exists", "code" => 422)
     end
 
+    error Gemstash::WebError do
+      status env['sinatra.error'].code
+    end
+
     get "/" do
       @gem_source.serve_root
     end
